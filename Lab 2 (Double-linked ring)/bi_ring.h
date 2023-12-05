@@ -117,8 +117,8 @@ public:
     };
 
     /**
- * Default constructor for `bi_ring` initializes the sentinel node, making it circular.
- */
+     * Default constructor for `bi_ring` initializes the sentinel node, making it circular.
+     */
     bi_ring() : sentinel(), size(0) {
         sentinel.next = &sentinel;
         sentinel.prev = &sentinel;
@@ -203,6 +203,10 @@ public:
      */
     Iterator push_front(Key key, Info info) {
         return insert(begin(), key, info);
+    }
+
+    Iterator push_back(Key key, Info info) {
+        return insert(end(), key, info);
     }
 
     /**
@@ -353,3 +357,36 @@ bi_ring<Key, Info> join(const bi_ring<Key, Info>& first,
     return unique(merged, sumInfo<Key, Info>);
 }
 
+template<typename Key, typename Info>
+bi_ring<Key, Info> shuffle(
+    const bi_ring<Key, Info>& first, unsigned int fcnt,
+    const bi_ring<Key, Info>& second, unsigned int scnt,
+    unsigned int reps) {
+
+    bi_ring<Key, Info> shuffled;
+    auto cit_first = first.cbegin();
+    auto cit_second = second.cbegin();
+
+    for (unsigned int rep = 0; rep < reps; rep++) {
+        unsigned int fcn = 0;
+        unsigned int scn = 0;
+
+        for (; fcn < fcnt; fcn++) {
+            if (cit_first == first.cend()) {
+                ++cit_first;
+            }
+            shuffled.push_back(*cit_first, cit_first.operator->());
+            ++cit_first;
+        }
+
+        for (; scn < scnt; scn++) {
+            if (cit_second == second.cend()) {
+                ++cit_second;
+            }
+            shuffled.push_back(*cit_second, cit_second.operator->());
+            ++cit_second;
+        }
+    }
+
+    return shuffled;
+}
