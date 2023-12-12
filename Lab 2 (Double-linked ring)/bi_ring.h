@@ -1,4 +1,7 @@
 #pragma once
+#include <iostream>
+#include <vector>
+
 
 template <typename Key, typename Info>
 class bi_ring {
@@ -15,9 +18,8 @@ private:
         Node() {};
         Node(Info info, Key key) : info(info), key(key) {}
     };
-
     Node<Key, Info> sentinel;
-    int size;
+    int _size;
 
 public:
     class Iterator {
@@ -64,6 +66,14 @@ public:
         }
 
         Info& operator->() const {
+            return current->info;
+        }
+
+        Key& key() const {
+            return current->key;
+        }
+
+        Info& info() const {
             return current->info;
         }
     };
@@ -114,12 +124,36 @@ public:
         const Info& operator->() const {
             return current->info;
         }
+
+        const Key& key() const {
+            return current->key;
+        }
+
+        const Info& info() const {
+            return current->info;
+        }
     };
+
+    friend std::ostream& operator<<(std::ostream& os, const bi_ring<Key, Info>& ring) {
+        if (ring.size() == 0) {
+            os << "The ring is empty." << std::endl;
+            return os;
+        }
+
+        typename bi_ring<Key, Info>::ConstIterator it = ring.cbegin();
+        do {
+            os << it.key() << " " << it.info() << " ";
+            ++it;
+        } while (it != ring.cend());
+
+        os << " ";
+        return os;
+    }
 
     /**
      * Default constructor for `bi_ring` initializes the sentinel node, making it circular.
      */
-    bi_ring() : sentinel(), size(0) {
+    bi_ring() : sentinel(), _size(0) {
         sentinel.next = &sentinel;
         sentinel.prev = &sentinel;
     }
@@ -158,19 +192,22 @@ public:
      * @return Reference to the modified `bi_ring`.
      */
     bi_ring& operator=(const bi_ring& src) {
-        const Node<Key, Info>* srcTemp = src.sentinel.next;
+        const Node<Key, Info>* srcTemp = src.sentinel.prev;
 
         while (srcTemp != &src.sentinel) {
-            push_front(srcTemp->key, srcTemp->info);
-            srcTemp = srcTemp->next;
+            push_back(srcTemp->key, srcTemp->info);
+            srcTemp = srcTemp->prev;
         }
 
         return *this;
     }
 
+    int size() const { return _size; }
+
     bool operator>(const bi_ring& toCompare) {
-        return this->size > toCompare->size();
+        return this->_size > toCompare->size();
     }
+
 
     /**
      * Inserts a new element with the provided key and info before the specified iterator's position.
@@ -189,7 +226,7 @@ public:
         position.current->next = newElement;
         next->prev = newElement;
 
-        size++;
+        _size++;
 
         return Iterator(position.current->next, this);
     }
@@ -222,7 +259,7 @@ public:
         delete position.current;
         prev.current->next = newNext.current;
         newNext.current->prev = prev.current;
-        size--;
+        _size--;
 
         return prev;
     }
@@ -276,7 +313,7 @@ public:
      * Prints the key and info of each element in the ring.
      */
     void print() const {
-        if (size == 0) {
+        if (_size == 0) {
             std::cout << "The ring is empty." << std::endl;
             return;
         }
@@ -297,8 +334,8 @@ bi_ring<Key, Info> filter(const bi_ring<Key, Info>& source,
     bi_ring<Key, Info> filteredRing;
 
     for (auto cit = source.cbegin(); cit != source.cend(); cit++) {
-        if (pred(*cit))
-            filteredRing.push_front(*cit, cit.operator->());
+        if (pred(cit.key()))
+            filteredRing.push_front(cit.key(), cit.info());
     }
 
     return filteredRing;
@@ -320,8 +357,8 @@ bi_ring<Key, Info> unique(const bi_ring<Key, Info>& source,
     bi_ring<Key, Info> uniqueRing;
 
     for (auto it = source.cbegin(); it != source.cend(); ++it) {
-        Key currentKey = *it;
-        Info currentInfo = it.operator->();
+        Key currentKey = it.key();
+        Info currentInfo = it.info();
 
         auto existingKey = findKey(uniqueRing, currentKey);
 
@@ -329,7 +366,7 @@ bi_ring<Key, Info> unique(const bi_ring<Key, Info>& source,
             uniqueRing.push_front(currentKey, currentInfo);
         }
         else {
-            Info aggregatedInfo = aggregate(currentKey, existingKey.operator->(), currentInfo);
+            Info aggregatedInfo = aggregate(currentKey, existingKey.info(), currentInfo);
             uniqueRing.erase(existingKey);
             uniqueRing.push_front(currentKey, aggregatedInfo);
         }
@@ -350,10 +387,9 @@ bi_ring<Key, Info> join(const bi_ring<Key, Info>& first,
     bi_ring<Key, Info> merged = first;
 
     for (auto cit = second.cbegin(); cit != second.cend(); ++cit) {
-        merged.push_front(*cit, cit.operator->());
+        merged.push_front(cit.key(), cit.info());
     }
 
-    merged.print();
     return unique(merged, sumInfo<Key, Info>);
 }
 
@@ -375,7 +411,7 @@ bi_ring<Key, Info> shuffle(
             if (cit_first == first.cend()) {
                 ++cit_first;
             }
-            shuffled.push_back(*cit_first, cit_first.operator->());
+            shuffled.push_back(cit_first.key(), cit_first.info());
             ++cit_first;
         }
 
@@ -383,10 +419,31 @@ bi_ring<Key, Info> shuffle(
             if (cit_second == second.cend()) {
                 ++cit_second;
             }
-            shuffled.push_back(*cit_second, cit_second.operator->());
+            shuffled.push_back(cit_second.key(), cit_second.info());
             ++cit_second;
         }
     }
 
     return shuffled;
+}
+
+//Additional function presented during the lab (#6)
+template<typename Key, typename Info>
+std::vector<bi_ring<Key, Info>> split(const bi_ring<Key, Info>& source) {
+    std::vector<bi_ring<Key, Info>> result;
+   
+    for (auto cit = source.cbegin(); cit != source.cend();) {
+
+        bi_ring<Key, Info> element;
+        auto current_last = element.cend();
+        while (cit.key() >= (--current_last).key()) {
+            element.push_front(cit.key(), cit.info());
+            current_last = element.cend();
+            cit++;
+        }
+
+         result.push_back(element);
+    }
+   
+    return result;
 }

@@ -1,2 +1,9 @@
 #pragma once
-/*=====TO BE ADDED =====*/
+void test_ring();
+void test_push_pop();
+void test_copy();
+void test_filter();
+void test_unique();
+void test_join();
+void test_shuffle();
+void run_all_tests();
