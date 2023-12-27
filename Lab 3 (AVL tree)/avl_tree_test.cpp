@@ -6,8 +6,8 @@ int main() {
     // Test insertion
     tree.insert({ 1, "One" });
     tree.insert({ 2, "Two" });
-    tree.insert({ 12, "Twelve" });
     tree.insert({ 11, "Eleven" });
+    tree.insert({ 12, "Twelve" });
     tree.insert({ 5, "Five" });
     tree.insert({ 3, "Three" });
     tree.insert({ 4, "Four" });

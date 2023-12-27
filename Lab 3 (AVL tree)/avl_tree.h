@@ -1,6 +1,7 @@
 #pragma once
 #include <utility>
 #include <iostream>
+#include <algorithm>
 
 
 template <typename Key, typename Info>
@@ -27,9 +28,24 @@ private:
 		}
 	};
 
+	int maxHeight(Node* first, Node* second) {
+		if (!first && !second)
+			return 0;
+		else if (!first) {
+			return second->height;
+		}
+		else if (!second) {
+			return first->height;
+		}
+		else {
+			return first->height > second->height ? first->height : second->height;
+		}
+	}
+
 	Node* insertNode(Node* current, std::pair<Key, Info> content) {
 		if (root->height == 0) {
 			root->content = content;
+			root->height++;
 			return root;
 		}
 
@@ -39,11 +55,15 @@ private:
 
 		if (content.first > current->content.first) {
 			current->right = insertNode(current->right, content);
-			/*current->right.height++;*/
 		}
-		else {
+		else if (content.first < current->content.first){
 			current->left = insertNode(current->left, content);
 		}
+		else {
+			current->content.second = content.second;
+		}
+
+		current->height = 1 + maxHeight(current->left, current->right);
 
 		return current;
 	}
@@ -78,7 +98,6 @@ public:
 	// insert (key, info) pair
 	void insert(std::pair<Key, Info> content) {
 		root = insertNode(root, content);
-		root->height++;
 	}
 
 	// remove given key
