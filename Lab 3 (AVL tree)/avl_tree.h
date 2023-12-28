@@ -115,7 +115,6 @@ private:
 			rightRotate(current);
 		}
 
-		// Right Left Case  
 		if (balance < -1 && content.first < current->right->content.first)
 		{
 			rightRotate(current->right);
@@ -125,20 +124,107 @@ private:
 
 		return current;
 	}
-
 	void print(Node* current, int spaces) const {
 		if (current) {
 			spaces += 5;
 
 			print(current->right, spaces);
+			
 
 			for (int i = 5; i < spaces; i++) {
 				std::cout << " ";
 			}
+
 			std::cout << current->content.first << " " << current->getBalanceFactor() << std::endl; // change to balance factor if needed
 
 			print(current->left, spaces);
 		}
+	}
+
+	bool removeNode(Node* current, Key key) {
+		if (root->height == 0) {
+			return false;
+		}
+
+		if (key > current->content.first) {
+			if (!current->right) {
+				return false;
+			}
+
+			if (removeNode(current->right, key)){
+				current->right = nullptr;
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		else if (key < current->content.first) {
+			if (!current->left) {
+				return false;  
+			}
+			if (removeNode(current->left, key)) {
+				current->left = nullptr;
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		else {
+			Node* temp = current;
+			if (current->left) {
+				current = current->left;
+				delete temp;
+			}
+			else if (current->right) {
+				current = current->right;
+				delete temp;
+			}
+			else {
+				delete current;
+				current = nullptr; 
+			}
+
+			if (current == nullptr) {
+				current->height = 1 + maxHeight(current->left, current->right);
+				int balance = current->getBalanceFactor();
+
+				if (balance > 1 && (!current->left || key < current->left->content.first))
+					rightRotate(current);
+
+				if (balance < -1 && key > current->right->content.first)
+					leftRotate(current);
+
+
+				if (balance > 1 && (!current->left || key < current->left->content.first))
+				{
+					leftRotate(current->left);
+					rightRotate(current);
+				}
+
+				if (balance < -1 && key < current->right->content.first)
+				{
+					rightRotate(current->right);
+					leftRotate(current);
+				}
+			}
+
+			return true;
+		}
+	}
+
+	bool findNode(Node* current, Key key) {
+		if (!current) {
+			return false;
+		}
+
+		if (key > current->content.first)
+			return findNode(current->right, key);
+		else if (key < current->content.first)
+			return findNode(current->left, key);
+		else
+			return true;
 	}
 	
 	Node* root;
@@ -159,9 +245,16 @@ public:
 	}
 
 	// remove given key
-	// 
+	bool remove(Key key) {
+		return removeNode(root, key);
+	}
+
+
 	// check if given key is present
-	// 
+	bool find(Key key) {
+		return findNode(root, key);
+	}
+
 	// print nicely formatted tree structure
 	void print() const{
 		if (!root) {
