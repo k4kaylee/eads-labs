@@ -77,6 +77,17 @@ private:
 		updateHeight(toRotate);
 	}
 
+	Node* minValueNode(Node* node)
+	{
+		Node* current = node;
+
+		/* loop down to find the leftmost leaf */
+		while (current->left != NULL)
+			current = current->left;
+
+		return current;
+	}
+
 
 	Node* insertNode(Node* current, std::pair<Key, Info> content) {
 		if (root->height == 0) {
@@ -141,17 +152,13 @@ private:
 		}
 	}
 
-	bool removeNode(Node* current, Key key) {
-		if (root->height == 0) {
+	bool removeNode(Node*& current, Key key) {
+		if (!current) {
 			return false;
 		}
 
 		if (key > current->content.first) {
-			if (!current->right) {
-				return false;
-			}
-
-			if (removeNode(current->right, key)){
+			if (removeNode(current->right, key)) {
 				current->right = nullptr;
 				return true;
 			}
@@ -160,9 +167,6 @@ private:
 			}
 		}
 		else if (key < current->content.first) {
-			if (!current->left) {
-				return false;  
-			}
 			if (removeNode(current->left, key)) {
 				current->left = nullptr;
 				return true;
@@ -173,20 +177,22 @@ private:
 		}
 		else {
 			Node* temp = current;
-			if (current->left) {
-				current = current->left;
-				delete temp;
-			}
-			else if (current->right) {
+			if (current->left == nullptr) {
 				current = current->right;
-				delete temp;
+			}
+			else if (current->right == nullptr) {
+				current = current->left;
 			}
 			else {
-				delete current;
-				current = nullptr; 
+				Node* minNode = minValueNode(current->right);
+				current->content.first = minNode->content.first;
+				removeNode(current->right, minNode->content.first);
 			}
 
-			if (current == nullptr) {
+			delete temp;
+			temp = nullptr;
+
+			if (current) {
 				current->height = 1 + maxHeight(current->left, current->right);
 				int balance = current->getBalanceFactor();
 
@@ -196,15 +202,12 @@ private:
 				if (balance < -1 && key > current->right->content.first)
 					leftRotate(current);
 
-
-				if (balance > 1 && (!current->left || key < current->left->content.first))
-				{
+				if (balance > 1 && (!current->left || key < current->left->content.first)) {
 					leftRotate(current->left);
 					rightRotate(current);
 				}
 
-				if (balance < -1 && key < current->right->content.first)
-				{
+				if (balance < -1 && key < current->right->content.first) {
 					rightRotate(current->right);
 					leftRotate(current);
 				}
@@ -214,17 +217,19 @@ private:
 		}
 	}
 
-	bool findNode(Node* current, Key key) {
+	Info& searchNode(Node* current, Key key) {
 		if (!current) {
-			return false;
+			// Return a reference to a default-constructed Info object
+			static Info defaultInfo; // Assuming Info has a default constructor
+			return defaultInfo;
 		}
 
 		if (key > current->content.first)
-			return findNode(current->right, key);
+			return searchNode(current->right, key);
 		else if (key < current->content.first)
-			return findNode(current->left, key);
+			return searchNode(current->left, key);
 		else
-			return true;
+			return current->content.second;
 	}
 	
 	Node* root;
@@ -252,7 +257,11 @@ public:
 
 	// check if given key is present
 	bool find(Key key) {
-		return findNode(root, key);
+		static Info defaultInfo;
+		if (searchNode(root, key) == defaultInfo)
+			return false;
+		else
+			return true;
 	}
 
 	// print nicely formatted tree structure
@@ -263,7 +272,13 @@ public:
 			print(root, 0);
 	}
 
-	Info& operator[](const Key& key);
-	const Info& operator[](const Key& key) const;
-	// what else can be useful in such a collection?
+	Info& operator[](const Key& key) {
+		return searchNode(root, key);
+	};
+
+	const Info& operator[](const Key& key) const{
+		const Info& result = searchNode(root, key);
+		return result;
+	}
+
 };
