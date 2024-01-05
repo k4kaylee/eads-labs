@@ -81,8 +81,7 @@ private:
 	{
 		Node* current = node;
 
-		/* loop down to find the leftmost leaf */
-		while (current->left != NULL)
+		while (current && current->left != nullptr)
 			current = current->left;
 
 		return current;
@@ -158,69 +157,59 @@ private:
 		}
 
 		if (key > current->content.first) {
-			if (removeNode(current->right, key)) {
-				current->right = nullptr;
-				return true;
-			}
-			else {
-				return false;
-			}
+			removeNode(current->right, key);
 		}
 		else if (key < current->content.first) {
-			if (removeNode(current->left, key)) {
-				current->left = nullptr;
-				return true;
-			}
-			else {
-				return false;
-			}
+			removeNode(current->left, key);
 		}
 		else {
 			Node* temp = current;
-			if (current->left == nullptr) {
-				current = current->right;
-			}
-			else if (current->right == nullptr) {
-				current = current->left;
-			}
-			else {
+			if (current->left != nullptr && current->right != nullptr) {
 				Node* minNode = minValueNode(current->right);
-				current->content.first = minNode->content.first;
+				current->content = minNode->content;
 				removeNode(current->right, minNode->content.first);
 			}
+			else if (current->left == nullptr) { // ??
+				current = current->right;
+				temp->right = nullptr;
+			}
+			else if (current->right == nullptr) { // ??
+				current = current->left;
+				temp->left = nullptr;
+			}
+		}
 
-			delete temp;
-			temp = nullptr;
+		if(current) {
+			current->height = 1 + maxHeight(current->left, current->right);
 
-			if (current) {
-				current->height = 1 + maxHeight(current->left, current->right);
-				int balance = current->getBalanceFactor();
+			int balance = current->getBalanceFactor();
 
-				if (balance > 1 && (!current->left || key < current->left->content.first))
-					rightRotate(current);
+			if (balance > 1 && current->left->getBalanceFactor() >= 0)
+				rightRotate(current);
 
-				if (balance < -1 && key > current->right->content.first)
-					leftRotate(current);
-
-				if (balance > 1 && (!current->left || key < current->left->content.first)) {
-					leftRotate(current->left);
-					rightRotate(current);
-				}
-
-				if (balance < -1 && key < current->right->content.first) {
-					rightRotate(current->right);
-					leftRotate(current);
-				}
+			// Left Right Case 
+			if (balance > 1 && current->left->getBalanceFactor() < 0) {
+				leftRotate(current->left);
+				rightRotate(current);
 			}
 
-			return true;
+			// Right Right Case 
+			if (balance < -1 && current->right->getBalanceFactor() <= 0)
+				leftRotate(current);
+
+			// Right Left Case 
+			if (balance < -1 && current->right->getBalanceFactor() > 0) {
+				rightRotate(current->right);
+				leftRotate(current);
+			}
 		}
+
+		return true;
 	}
 
 	Info& searchNode(Node* current, Key key) {
 		if (!current) {
-			// Return a reference to a default-constructed Info object
-			static Info defaultInfo; // Assuming Info has a default constructor
+			static Info defaultInfo; 
 			return defaultInfo;
 		}
 
@@ -237,12 +226,34 @@ public:
 	avl_tree() {
 		root = new Node();
 	};
-	avl_tree(const avl_tree& src);
+
+	avl_tree(const avl_tree& src) {
+		root = nullptr;
+		if (src.root) {
+			root = new Node(src.root->content);
+			root->left = src.root->left ? new Node(*(src.root->left)) : nullptr;
+			root->right = src.root->right ? new Node(*(src.root->right)) : nullptr;
+		}
+	};
+
 	~avl_tree() {
 		delete root;
 	};
+	
 
-	avl_tree& operator=(const avl_tree& src);
+	avl_tree<Key, Info>& operator=(const avl_tree& src) {
+		if (this != &src) {
+			delete root;
+
+			root = nullptr;
+			if (src.root) {
+				root = new Node(src.root->content);
+				root->left = src.root->left ? new Node(*(src.root->left)) : nullptr;
+				root->right = src.root->right ? new Node(*(src.root->right)) : nullptr;
+			}
+		}
+		return *this;
+	}
 
 	// insert (key, info) pair
 	void insert(std::pair<Key, Info> content) {
