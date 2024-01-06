@@ -113,8 +113,8 @@ int main() {
     tree.remove('t');
     std::cout << "Remove t: \n";
     tree.print();
-    tree.remove('e');
-    std::cout << "Remove e: \n";
+    tree.insert({ 'e', 'e' });
+    std::cout << "Add e: \n";
     tree.print();
     tree.insert({ 'r', 'r' });
     std::cout << "Add r: \n";
@@ -124,6 +124,21 @@ int main() {
     tree.print();
     tree.remove('c');
     std::cout << "Remove c: \n";
+    tree.print();
+    tree.insert({ 'i', 'i' });
+    std::cout << "Add i: \n";
+    tree.print();
+    tree.insert({ 'e', 'e' });
+    std::cout << "Add e: \n";
+    tree.print();
+    tree.remove('n');
+    std::cout << "Remove n: \n";
+    tree.print();
+    tree.insert({ 'c', 'c' });
+    std::cout << "Add c: \n";
+    tree.print();
+    tree.remove('e');
+    std::cout << "Remove e: \n";
     tree.print();
 
 

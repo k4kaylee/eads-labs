@@ -88,6 +88,53 @@ private:
 	}
 
 
+	void print(Node* current, int spaces) const {
+		if (current) {
+			spaces += 5;
+
+			print(current->right, spaces);
+			
+
+			for (int i = 5; i < spaces; i++) {
+				std::cout << " ";
+			}
+
+			std::cout << current->content.first << " " << current->getBalanceFactor() << std::endl; // change to balance factor if needed
+
+			print(current->left, spaces);
+		}
+	}
+
+	void balanceNode(Node*& current) {
+		if (!current) {
+			return;
+		}
+
+		int balance = current->getBalanceFactor();
+
+		// Left Left Case
+		if (balance > 1 && current->left->getBalanceFactor() >= 0) {
+			rightRotate(current);
+		}
+
+		// Left Right Case
+		if (balance > 1 && current->left->getBalanceFactor() < 0) {
+			leftRotate(current->left);
+			rightRotate(current);
+		}
+
+		// Right Right Case
+		if (balance < -1 && current->right->getBalanceFactor() <= 0) {
+			leftRotate(current);
+		}
+
+		// Right Left Case
+		if (balance < -1 && current->right->getBalanceFactor() > 0) {
+			rightRotate(current->right);
+			leftRotate(current);
+		}
+	}
+
 	Node* insertNode(Node* current, std::pair<Key, Info> content) {
 		if (root->height == 0) {
 			root->content = content;
@@ -109,46 +156,10 @@ private:
 			current->content.second = content.second;
 		}
 
-		current->height = 1 + maxHeight(current->left, current->right);
-		int balance = current->getBalanceFactor();
-
-		if (balance > 1 && (!current->left || content.first < current->left->content.first))
-			rightRotate(current);
-
-		if (balance < -1 && content.first > current->right->content.first)
-			leftRotate(current);
-
-
-		if (balance > 1 && (!current->left || content.first < current->left->content.first))
-		{
-			leftRotate(current->left);
-			rightRotate(current);
-		}
-
-		if (balance < -1 && content.first < current->right->content.first)
-		{
-			rightRotate(current->right);
-			leftRotate(current);
-		}
-		
+		updateHeight(current);
+		balanceNode(current);
 
 		return current;
-	}
-	void print(Node* current, int spaces) const {
-		if (current) {
-			spaces += 5;
-
-			print(current->right, spaces);
-			
-
-			for (int i = 5; i < spaces; i++) {
-				std::cout << " ";
-			}
-
-			std::cout << current->content.first << " " << current->getBalanceFactor() << std::endl; // change to balance factor if needed
-
-			print(current->left, spaces);
-		}
 	}
 
 	bool removeNode(Node*& current, Key key) {
@@ -169,40 +180,18 @@ private:
 				current->content = minNode->content;
 				removeNode(current->right, minNode->content.first);
 			}
-			else if (current->left == nullptr) { // ??
+			else if (current->left == nullptr) {
 				current = current->right;
 				temp->right = nullptr;
 			}
-			else if (current->right == nullptr) { // ??
+			else if (current->right == nullptr) {
 				current = current->left;
 				temp->left = nullptr;
 			}
 		}
 
-		if(current) {
-			current->height = 1 + maxHeight(current->left, current->right);
-
-			int balance = current->getBalanceFactor();
-
-			if (balance > 1 && current->left->getBalanceFactor() >= 0)
-				rightRotate(current);
-
-			// Left Right Case 
-			if (balance > 1 && current->left->getBalanceFactor() < 0) {
-				leftRotate(current->left);
-				rightRotate(current);
-			}
-
-			// Right Right Case 
-			if (balance < -1 && current->right->getBalanceFactor() <= 0)
-				leftRotate(current);
-
-			// Right Left Case 
-			if (balance < -1 && current->right->getBalanceFactor() > 0) {
-				rightRotate(current->right);
-				leftRotate(current);
-			}
-		}
+		updateHeight(current);
+		balanceNode(current);
 
 		return true;
 	}
