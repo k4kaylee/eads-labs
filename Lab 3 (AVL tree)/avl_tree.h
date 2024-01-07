@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <utility>
 #include <iostream>
+#include <vector>
 #include <algorithm>
 
 
@@ -77,14 +78,18 @@ private:
 		updateHeight(toRotate);
 	}
 
-	Node* minValueNode(Node* node)
-	{
-		Node* current = node;
+	Node* minValueNode(Node* node){
+		while (node && node->left != nullptr)
+			node = node->left;
 
-		while (current && current->left != nullptr)
-			current = current->left;
+		return node;
+	}
 
-		return current;
+	Node* maxValueNode(Node* node) {
+		while (node && node->left != nullptr)
+			node = node->left;
+
+		return node;
 	}
 
 
@@ -209,6 +214,19 @@ private:
 		else
 			return current->content.second;
 	}
+
+	void reverseTraversal(const typename avl_tree<Key, Info>::Node* current, std::vector<std::pair<Key, Info>>& result, unsigned& count) const {
+		if (current && count > 0) {
+			reverseTraversal(current->right, result, count);
+
+			if (count > 0) {
+				result.push_back(current->content);
+				count--;
+			}
+
+			reverseTraversal(current->left, result, count);
+		}
+	}
 	
 	Node* root;
 public:
@@ -280,5 +298,20 @@ public:
 		const Info& result = searchNode(root, key);
 		return result;
 	}
-
+	
+	void reverseInOrderTraversal(std::vector<std::pair<Key, Info>>& result, unsigned cnt) const {
+		reverseTraversal(root, result, cnt);
+	}
 };
+
+
+
+
+template <typename Key, typename Info>
+std::vector<std::pair<Key, Info>> maxinfo_selector(const avl_tree<Key, Info>& tree, unsigned cnt) {
+	std::vector<std::pair<Key, Info>> result;
+
+	tree.reverseInOrderTraversal(result, cnt);
+
+	return result;
+}

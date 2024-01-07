@@ -1,4 +1,5 @@
 #include "avl_tree.h"
+#include <vector>
 
 int main() {
     //avl_tree<int, std::string> tree;
@@ -141,7 +142,10 @@ int main() {
     std::cout << "Remove e: \n";
     tree.print();
 
-
+    std::vector<std::pair<char, char>> biggestNodes = maxinfo_selector(tree, 6);
+    for (std::pair<char, char> i : biggestNodes)
+        std::cout << "\n" << i.first << " " << i.second << "  ";
+    std::cout << std::endl;
 
 
 	return 0;
